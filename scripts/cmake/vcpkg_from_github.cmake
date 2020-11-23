@@ -187,8 +187,8 @@ function(vcpkg_from_github)
         if(EXISTS "${downloaded_file_path}.version")
             file(REMOVE "${downloaded_file_path}.version")
         endif()
-        if(EXISTS "${CURRENT_BUILDTREES_DIR}/src/head")
-            file(REMOVE_RECURSE "${CURRENT_BUILDTREES_DIR}/src/head")
+        if(EXISTS "${CURRENT_BUILDTREES_DIR}/src/head/${REPO_NAME}")
+            file(REMOVE_RECURSE "${CURRENT_BUILDTREES_DIR}/src/head/${REPO_NAME}")
         endif()
 
         # Try to download the file and version information from github.
@@ -224,7 +224,7 @@ function(vcpkg_from_github)
         OUT_SOURCE_PATH SOURCE_PATH
         ARCHIVE "${downloaded_file_path}"
         REF "${SANITIZED_HEAD_REF}"
-        WORKING_DIRECTORY "${CURRENT_BUILDTREES_DIR}/src/head"
+        WORKING_DIRECTORY "${CURRENT_BUILDTREES_DIR}/src/head/${REPO_NAME}"
         PATCHES ${_vdud_PATCHES}
     )
     set(${_vdud_OUT_SOURCE_PATH} "${SOURCE_PATH}" PARENT_SCOPE)
