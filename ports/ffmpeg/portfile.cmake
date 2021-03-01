@@ -359,6 +359,17 @@ if (VCPKG_TARGET_ARCHITECTURE STREQUAL "arm" OR VCPKG_TARGET_ARCHITECTURE STREQU
             set(ENV{PATH} "$ENV{PATH}${VCPKG_HOST_PATH_SEPARATOR}${GAS_ITEM_PATH}")
         endforeach(GAS_PATH)
     endif()
+
+    if (VCPKG_CMAKE_SYSTEM_NAME STREQUAL "Linux")
+#         PKG_CONFIG_PATH=/home/csaba/vcpkg/installed/arm64-linux/lib/pkgconfig/
+	message(STATUS "$ENV{PKG_CONFIG_PATH}")
+	set(ENV{PKG_CONFIG_PATH} /home/csaba/vcpkg/installed/arm64-linux/lib/pkgconfig/)
+	message(STATUS "$ENV{PKG_CONFIG_PATH}")
+#        find_program(PKGCONFIG pkg-config)
+        # Need to figure out a way to generate --cross-prefix below programmatically...
+        set(OPTIONS_CROSS " --enable-cross-compile --target-os=linux --arch=${VCPKG_TARGET_ARCHITECTURE} --cross-prefix=aarch64-linux-gnu-")
+    endif()
+
 elseif (VCPKG_TARGET_ARCHITECTURE STREQUAL "x64")
 elseif (VCPKG_TARGET_ARCHITECTURE STREQUAL "x86")
 else()
