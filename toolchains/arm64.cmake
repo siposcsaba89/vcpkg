@@ -7,6 +7,7 @@ set(CMAKE_SYSTEM_PROCESSOR aarch64)
 # Name of C compiler.
 set(CMAKE_C_COMPILER "/usr/bin/aarch64-linux-gnu-gcc")
 set(CMAKE_CXX_COMPILER "/usr/bin/aarch64-linux-gnu-g++")
+set(CMAKE_Fortran_COMPILER "/usr/bin/aarch64-linux-gnu-gfortran-7")
 
 # Where to look for the target environment. (More paths can be added here)
 set(CMAKE_FIND_ROOT_PATH /usr/aarch64-linux-gnu)
@@ -22,3 +23,6 @@ set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 #set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
 set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE arm64)
+
+set(CMAKE_CROSSCOMPILING_EMULATOR qemu-aarch64)
+set(CMAKE_POSITION_INDEPENDENT_CODE 1)
