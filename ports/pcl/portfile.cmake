@@ -45,7 +45,7 @@ vcpkg_configure_cmake(
     PREFER_NINJA
     OPTIONS
         # BUILD
-        -DBUILD_surface_on_nurbs=ON
+        -DBUILD_surface_on_nurbs=OFF
         # PCL
         -DPCL_BUILD_WITH_BOOST_DYNAMIC_LINKING_WIN32=${PCL_SHARED_LIBS}
         -DPCL_BUILD_WITH_FLANN_DYNAMIC_LINKING_WIN32=${PCL_SHARED_LIBS}
