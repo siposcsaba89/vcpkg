@@ -7,29 +7,30 @@ list(APPEND ANGLE_DEFINITIONS
     NOMINMAX
 )
 
-# We're targeting Windows 10 which will have DirectX 11
-list(APPEND ANGLE_SOURCES
-    ${d3d11_backend_sources}
-    ${d3d_shared_sources}
+# Direct3D backends (controlled via USE_D3D and USE_D3D11 features)
+if(USE_D3D11 OR USE_D3D)
+    list(APPEND ANGLE_SOURCES
+        ${d3d11_backend_sources}
+        ${d3d_shared_sources}
 
-    ${angle_translator_hlsl_sources}
+        ${angle_translator_hlsl_sources}
 
-    ${libangle_gpu_info_util_sources}
-    ${libangle_gpu_info_util_win_sources}
-)
+        ${libangle_gpu_info_util_sources}
+        ${libangle_gpu_info_util_win_sources}
+    )
 
-list(APPEND ANGLE_DEFINITIONS
-    ANGLE_ENABLE_D3D11
-    ANGLE_ENABLE_HLSL
-    # VCPKG EDIT: add ANGLE_PRELOADED_D3DCOMPILER_MODULE_NAMES
-    "-DANGLE_PRELOADED_D3DCOMPILER_MODULE_NAMES={ \"d3dcompiler_47.dll\", \"d3dcompiler_46.dll\", \"d3dcompiler_43.dll\" }"
-)
+    list(APPEND ANGLE_DEFINITIONS
+        ANGLE_ENABLE_D3D11
+        ANGLE_ENABLE_HLSL
+        # VCPKG EDIT: add ANGLE_PRELOADED_D3DCOMPILER_MODULE_NAMES
+        "-DANGLE_PRELOADED_D3DCOMPILER_MODULE_NAMES={ \"d3dcompiler_47.dll\", \"d3dcompiler_46.dll\", \"d3dcompiler_43.dll\" }"
+    )
 
-# https://issues.angleproject.org/issues/345274916
-list(APPEND ANGLEGLESv2_LIBRARIES dxguid dxgi synchronization)
+    # https://issues.angleproject.org/issues/345274916
+    list(APPEND ANGLEGLESv2_LIBRARIES dxguid dxgi synchronization)
+endif()
 
-if(NOT angle_is_winuwp) # vcpkg EDIT: Exclude DirectX 9 on UWP
-    # DirectX 9 support should be optional but ANGLE will not compile without it
+if(USE_D3D AND NOT angle_is_winuwp) # vcpkg EDIT: Exclude DirectX 9 on UWP
     list(APPEND ANGLE_SOURCES ${d3d9_backend_sources})
     list(APPEND ANGLE_DEFINITIONS ANGLE_ENABLE_D3D9)
     list(APPEND ANGLEGLESv2_LIBRARIES d3d9)
@@ -65,4 +66,24 @@ if(USE_OPENGL)
             ANGLE_ENABLE_GL_DESKTOP_BACKEND
         )
     endif()
+endif()
+
+# Vulkan backend
+if(USE_VULKAN)
+    find_package(Vulkan REQUIRED)
+    
+    list(APPEND ANGLE_SOURCES
+        ${angle_vulkan_backend_sources}
+        ${angle_translator_lib_spirv_sources}
+        ${angle_spirv_builder_sources}
+    )
+
+    list(APPEND ANGLE_DEFINITIONS
+        ANGLE_ENABLE_VULKAN
+        VK_USE_PLATFORM_WIN32_KHR
+    )
+
+    list(APPEND ANGLEGLESv2_LIBRARIES
+        Vulkan::Vulkan
+    )
 endif()

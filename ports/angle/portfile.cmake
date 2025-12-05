@@ -30,9 +30,29 @@ else()
   set(ANGLE_BUILDSYSTEM_PORT "Linux")
 endif()
 
+set(USE_D3D OFF)
+if ("d3d" IN_LIST FEATURES)
+  set(USE_D3D ON)
+endif()
+
+set(USE_D3D11 OFF)
+if ("d3d11" IN_LIST FEATURES)
+  set(USE_D3D11 ON)
+endif()
+
+set(USE_OPENGL OFF)
+if ("opengl" IN_LIST FEATURES)
+  set(USE_OPENGL ON)
+endif()
+
 set(USE_METAL OFF)
 if ("metal" IN_LIST FEATURES)
   set(USE_METAL ON)
+endif()
+
+set(USE_VULKAN OFF)
+if ("vulkan" IN_LIST FEATURES)
+  set(USE_VULKAN ON)
 endif()
 
 # chromium/7258
@@ -49,6 +69,7 @@ vcpkg_from_github(
     # On update check headers against opengl-registry
     PATCHES
         001-fix-builder-error.patch
+        002-fix-x11-macro-conflict.patch
 )
 
 # Generate angle_commit.h
@@ -68,7 +89,13 @@ string(SUBSTRING "${ANGLE_COMMIT}" 0 ${ANGLE_PROGRAM_VERSION_HASH_SIZE} ANGLE_PR
 configure_file("${CMAKE_CURRENT_LIST_DIR}/ANGLEShaderProgramVersion.h.in" "${SOURCE_PATH}/ANGLEShaderProgramVersion.h" @ONLY)
 configure_file("${CMAKE_CURRENT_LIST_DIR}/ANGLEShaderProgramVersion.h.in" "${SOURCE_PATH}/src/common/ANGLEShaderProgramVersion.h" @ONLY)
 
-file(COPY "${CMAKE_CURRENT_LIST_DIR}/unofficial-angle-config.cmake" DESTINATION "${SOURCE_PATH}")
+# Configure unofficial-angle-config.cmake with feature flags
+if("vulkan" IN_LIST FEATURES)
+    set(vulkan TRUE)
+else()
+    set(vulkan FALSE)
+endif()
+configure_file("${CMAKE_CURRENT_LIST_DIR}/unofficial-angle-config.cmake" "${SOURCE_PATH}/unofficial-angle-config.cmake" @ONLY)
 
 set(ANGLE_WEBKIT_BUILDSYSTEM_COMMIT "0742522b24152262b04913242cb0b3c48de92ba0")
 
@@ -91,6 +118,9 @@ set(_renderer_gn_files_to_convert
   "libANGLE/renderer/gl/BUILD.gn GL.cmake"
   "libANGLE/renderer/metal/BUILD.gn Metal.cmake"
 )
+
+# Note: Vulkan backend is not converted from GN due to complex dependencies
+# Instead, we manually define the sources in cmake-buildsystem/cmake/Vulkan.cmake
 
 foreach(_root_gni_file IN LISTS _root_gni_files_to_convert)
   separate_arguments(_file_values UNIX_COMMAND "${_root_gni_file}")
@@ -130,6 +160,9 @@ file(GLOB MODULES "${CMAKE_CURRENT_LIST_DIR}/cmake-buildsystem/cmake/*.cmake")
 file(COPY ${MODULES} DESTINATION "${SOURCE_PATH}/cmake")
 
 function(checkout_in_path PATH URL REF)
+    if(EXISTS "${PATH}")
+        file(REMOVE_RECURSE "${PATH}")
+    endif()
     vcpkg_from_git(
         OUT_SOURCE_PATH DEP_SOURCE_PATH
         URL "${URL}"
@@ -151,13 +184,22 @@ checkout_in_path(
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
+    MAYBE_UNUSED_VARIABLES
+        DISABLE_INSTALL_HEADERS
+        USE_D3D
+        USE_D3D11
+        USE_METAL
     OPTIONS_DEBUG -DDISABLE_INSTALL_HEADERS=1
     OPTIONS
         "-D${ANGLE_CPU_BITNESS}=1"
         "-DPORT=${ANGLE_BUILDSYSTEM_PORT}"
         "-DANGLE_USE_D3D11_COMPOSITOR_NATIVE_WINDOW=${ANGLE_USE_D3D11_COMPOSITOR_NATIVE_WINDOW}"
         "-DVCPKG_TARGET_IS_WINDOWS=${VCPKG_TARGET_IS_WINDOWS}"
+        "-DUSE_D3D=${USE_D3D}"
+        "-DUSE_D3D11=${USE_D3D11}"
+        "-DUSE_OPENGL=${USE_OPENGL}"
         "-DUSE_METAL=${USE_METAL}"
+        "-DUSE_VULKAN=${USE_VULKAN}"
 )
 
 vcpkg_cmake_install()

@@ -1,0 +1,83 @@
+diff --git a/src/common/vulkan/vk_headers.h b/src/common/vulkan/vk_headers.h
+index f40d1ba..6d9a505 100644
+--- a/src/common/vulkan/vk_headers.h
++++ b/src/common/vulkan/vk_headers.h
+@@ -16,6 +16,18 @@
+ #    include <vulkan/vulkan.h>
+ #endif
+ 
++// Undefine X11 macros that conflict with ANGLE enum values
++// These are defined by X11 headers (included by vulkan.h on Linux)
++#ifdef Success
++#undef Success
++#endif
++#ifdef None
++#undef None
++#endif
++#ifdef Always
++#undef Always
++#endif
++
+ #if !defined(ANGLE_SHARED_LIBVULKAN)
+ 
+ namespace rx
+diff --git a/src/libANGLE/BlobCache.h b/src/libANGLE/BlobCache.h
+index 9895be6..1b847e3 100644
+--- a/src/libANGLE/BlobCache.h
++++ b/src/libANGLE/BlobCache.h
+@@ -10,6 +10,14 @@
+ #ifndef LIBANGLE_BLOB_CACHE_H_
+ #define LIBANGLE_BLOB_CACHE_H_
+ 
++// Undefine X11 macros that conflict with our enum values
++#ifdef Success
++#undef Success
++#endif
++#ifdef None
++#undef None
++#endif
++
+ #include <array>
+ #include <cstring>
+ 
+diff --git a/src/libANGLE/renderer/vulkan/FramebufferVk.h b/src/libANGLE/renderer/vulkan/FramebufferVk.h
+index dce8329..c615986 100644
+--- a/src/libANGLE/renderer/vulkan/FramebufferVk.h
++++ b/src/libANGLE/renderer/vulkan/FramebufferVk.h
+@@ -10,6 +10,17 @@
+ #ifndef LIBANGLE_RENDERER_VULKAN_FRAMEBUFFERVK_H_
+ #define LIBANGLE_RENDERER_VULKAN_FRAMEBUFFERVK_H_
+ 
++// Undefine X11 macros that conflict with our enum values
++#ifdef Success
++#undef Success
++#endif
++#ifdef None
++#undef None
++#endif
++#ifdef Always
++#undef Always
++#endif
++
+ #include "libANGLE/angletypes.h"
+ #include "libANGLE/renderer/FramebufferImpl.h"
+ #include "libANGLE/renderer/RenderTargetCache.h"
+diff --git a/src/libANGLE/renderer/vulkan/vk_cache_utils.h b/src/libANGLE/renderer/vulkan/vk_cache_utils.h
+index 057c883..a6b5f30 100644
+--- a/src/libANGLE/renderer/vulkan/vk_cache_utils.h
++++ b/src/libANGLE/renderer/vulkan/vk_cache_utils.h
+@@ -11,6 +11,14 @@
+ #ifndef LIBANGLE_RENDERER_VULKAN_VK_CACHE_UTILS_H_
+ #define LIBANGLE_RENDERER_VULKAN_VK_CACHE_UTILS_H_
+ 
++// Undefine X11 macros that conflict with our enum values
++#ifdef Success
++#undef Success
++#endif
++#ifdef None
++#undef None
++#endif
++
+ #include <deque>
+ 
+ #include "common/Color.h"

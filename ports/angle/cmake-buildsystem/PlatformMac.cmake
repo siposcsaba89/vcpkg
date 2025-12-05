@@ -62,3 +62,24 @@ if(USE_OPENGL OR ENABLE_WEBGL)
         ANGLE_ENABLE_OPENGL
     )
 endif()
+
+# Vulkan backend
+if(USE_VULKAN)
+    find_package(Vulkan REQUIRED)
+    
+    list(APPEND ANGLE_SOURCES
+        ${angle_vulkan_backend_sources}
+        ${angle_translator_lib_spirv_sources}
+        ${angle_spirv_builder_sources}
+    )
+
+    list(APPEND ANGLE_DEFINITIONS
+        ANGLE_ENABLE_VULKAN
+        VK_USE_PLATFORM_METAL_EXT
+    )
+
+    list(APPEND ANGLEGLESv2_LIBRARIES
+        Vulkan::Vulkan
+    )
+endif()
+

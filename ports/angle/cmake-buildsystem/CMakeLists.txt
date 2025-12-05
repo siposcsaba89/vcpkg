@@ -7,9 +7,7 @@ include(WebKitCommon-minimal)
 set(ANGLE_FRAMEWORK_HEADERS_DIR "${CMAKE_BINARY_DIR}/ANGLE/headers")
 
 set(USE_ANGLE_EGL ON)
-if (NOT WINDOWS_STORE AND NOT USE_METAL)
-    set(USE_OPENGL ON)
-endif()
+# USE_OPENGL, USE_METAL, USE_VULKAN, USE_D3D, USE_D3D11 are now controlled via vcpkg features
 
 if(MSVC)
     add_compile_options(/d2guard4 /Wv:18 /guard:cf /permissive /bigobj)
@@ -100,10 +98,13 @@ elseif (WIN32)
         set(angle_is_winuwp TRUE)
         set(target_os "winuwp")
     endif()
-    if (NOT angle_is_winuwp)
+    # D3D9 and D3D11 backends are now controlled via USE_D3D and USE_D3D11 features
+    if (USE_D3D AND NOT angle_is_winuwp)
         set(angle_enable_d3d9 TRUE)
     endif()
-    set(angle_enable_d3d11 TRUE)
+    if (USE_D3D11 OR USE_D3D)
+        set(angle_enable_d3d11 TRUE)
+    endif()
 elseif (UNIX)
     set(is_linux TRUE)
 endif ()
@@ -116,6 +117,9 @@ include(GLESv2.cmake)
 include(D3D.cmake)
 include(GL.cmake)
 include(Metal.cmake)
+if (USE_VULKAN)
+    include(Vulkan.cmake)
+endif()
 
 set(no_gl_prototypes
     GL_GLES_PROTOTYPES=0
@@ -216,6 +220,39 @@ if (WIN32)
     endif()
 endif ()
 
+# Add Vulkan backend sources if enabled
+if(USE_VULKAN)
+    list(APPEND ANGLE_SOURCES
+        ${angle_vulkan_backend_sources}
+        ${angle_translator_lib_spirv_sources}
+        ${angle_spirv_builder_sources}
+        src/gpu_info_util/SystemInfo_vulkan.cpp
+        src/gpu_info_util/SystemInfo_vulkan.h
+        src/common/vulkan/libvulkan_loader.cpp
+        src/common/vulkan/libvulkan_loader.h
+        src/common/vulkan/vulkan_icd.cpp
+        src/common/vulkan/vulkan_icd.h
+        src/common/vulkan/vk_headers.h
+    )
+    list(APPEND ANGLE_DEFINITIONS
+        ANGLE_ENABLE_VULKAN
+        ANGLE_VK_MOCK_ICD_JSON=""
+        ANGLE_VK_LAYERS_DIR=""
+    )
+    # Platform-specific Vulkan defines
+    if(WIN32)
+        list(APPEND ANGLE_DEFINITIONS VK_USE_PLATFORM_WIN32_KHR)
+    elseif(APPLE)
+        list(APPEND ANGLE_DEFINITIONS VK_USE_PLATFORM_METAL_EXT)
+    elseif(LINUX)
+        list(APPEND ANGLE_DEFINITIONS 
+            VK_USE_PLATFORM_XCB_KHR
+            VK_USE_PLATFORM_XLIB_KHR
+            VK_USE_PLATFORM_WAYLAND_KHR
+        )
+    endif()
+endif()
+
 set(ANGLEGLESv2_LIBRARIES
     ANGLE
 )
@@ -233,6 +270,16 @@ set(angle_gl_enum_utils # VCPKG EDIT: Update paths
 )
 
 WEBKIT_INCLUDE_CONFIG_FILES_IF_EXISTS()
+
+# Find Vulkan packages if enabled (must be before ANGLE target creation)
+if(USE_VULKAN)
+    find_package(VulkanMemoryAllocator CONFIG REQUIRED)
+    find_package(SPIRV-Tools-opt CONFIG REQUIRED)
+    set(ANGLE_VULKAN_LINK_LIBRARIES 
+        GPUOpen::VulkanMemoryAllocator
+        SPIRV-Tools-opt
+    )
+endif()
 
 add_subdirectory(include)
 
@@ -257,6 +304,9 @@ if (USE_ANGLE_EGL OR ENABLE_WEBGL)
     )
     target_compile_definitions(ANGLE PUBLIC ${ANGLE_DEFINITIONS})
     target_link_libraries(ANGLE PRIVATE ZLIB::ZLIB ${CMAKE_DL_LIBS})
+    if(ANGLE_VULKAN_LINK_LIBRARIES)
+        target_link_libraries(ANGLE PRIVATE ${ANGLE_VULKAN_LINK_LIBRARIES})
+    endif()
 
     target_compile_definitions(ANGLEFramework INTERFACE ${gl_prototypes})
 
